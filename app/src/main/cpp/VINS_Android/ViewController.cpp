@@ -4,6 +4,14 @@ ViewController *ViewController::instance = nullptr;
 ASensorEventQueue *ViewController::accelerometerEventQueue = nullptr;
 ASensorEventQueue *ViewController::gyroscopeEventQueue = nullptr;
 
+#define CV_RGBA2GRAY cv::COLOR_RGBA2GRAY
+#define CV_RGBA2RGB cv::COLOR_RGBA2RGB
+#define CV_RGB2GRAY cv::COLOR_RGB2GRAY
+#define CV_RGB2RGBA cv::COLOR_RGB2RGBA
+#define CV_RGB2RGBA cv::COLOR_RGB2RGBA
+#define CV_YUV2RGBA_NV21 cv::COLOR_YUV2RGBA_NV21
+
+
 NSTimeInterval ViewController::systemUptime() {
     struct timespec time;
     clock_gettime(CLOCK_BOOTTIME, &time);

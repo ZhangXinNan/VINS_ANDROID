@@ -7,6 +7,8 @@
 //
 
 #include "draw_result.hpp"
+typedef cv::Scalar cvScalar;
+//typedef cv::Scalar Scalar;
 
 DrawResult::DrawResult(float _pitch, float _roll, float _yaw, float _Tx, float _Ty, float _Tz)
 :pitch{_pitch},roll{_roll},yaw{_yaw},Tx{_Tx},Ty{_Ty},Tz{_Tz},change_view_manualy{false}
@@ -1055,7 +1057,8 @@ void DrawResult::Reprojection(cv::Mat &result, vector<Vector3f> &point_cloud, co
             camera_coner.push_back(World2VirturCam(it, depth_marker));
         }
         
-        CvScalar camera_color = cvScalar(0,0,255);
+//        CvScalar camera_color = cvScalar(0,0,255);
+        cv::Scalar camera_color = cvScalar(0,0,255);
         cv::line(result, camera_coner[0], camera_coner[1], camera_color, 1, 8, 0);  //RGB
         cv::line(result, camera_coner[1], camera_coner[2], camera_color, 1, 8, 0);
         cv::line(result, camera_coner[2], camera_coner[3], camera_color, 1, 8, 0);
