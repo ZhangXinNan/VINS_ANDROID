@@ -20,7 +20,7 @@ NSTimeInterval ViewController::systemUptime() {
 
 ViewController::ViewController() {
     LOGI("ViewController Constructor");
-    this->instance = this;
+    ViewController::instance = this;
 }
 
 ViewController::~ViewController() {
@@ -45,7 +45,7 @@ void ViewController::viewDidLoad() {
     self.videoCamera.defaultFPS = 30;
 #endif
     */
-    isCapturing = false;
+    this->isCapturing = false;
 
 //        CameraUtils.setExposureOffset(-1.0f); // [CameraUtils setExposureOffset: -1.0f];
     //TODO: [videoCamera start];
@@ -65,11 +65,11 @@ void ViewController::viewDidLoad() {
 //        UILongPressGestureRecognizer *resultLongPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleLongPress:)];
 //        [self.imageView addGestureRecognizer:resultLongPressGestureRecognizer];
 
-    if (!feature_tracker)
-        feature_tracker = new FeatureTracker();
+    if (!this->feature_tracker)
+        this->feature_tracker = new FeatureTracker();
 
     //give projection variance
-    vins.setIMUModel();
+    this->vins.setIMUModel();
 
     //UI
 //        _loopButton.layer.zPosition = 1;
@@ -85,31 +85,31 @@ void ViewController::viewDidLoad() {
 
     /****************************************Init all the thread****************************************/
 //        _condition=[[NSCondition alloc] init];
-    mainLoop = std::thread(&ViewController::run, this);
+    this->mainLoop = std::thread(&ViewController::run, this);
     // TODO: move further down
     // mainLoop=[[NSThread alloc]initWithTarget:self selector:@selector(run) object:nil];
     // [mainLoop setName:@"mainLoop"];
 
-    saveData = std::thread(&ViewController::saveDataLoop, this);
+    this->saveData = std::thread(&ViewController::saveDataLoop, this);
     // TODO: move further down
 //        saveData=[[NSThread alloc]initWithTarget:self selector:@selector(saveData) object:nil];
 //        [saveData setName:@"saveData"];
 
     if (LOOP_CLOSURE) {
         //loop closure thread
-        loop_thread = std::thread(&ViewController::loopDetectionLoop, this); /*
+        this->loop_thread = std::thread(&ViewController::loopDetectionLoop, this); /*
             loop_thread = [[NSThread alloc]initWithTarget:self selector:@selector(loop_thread) object:nil];
             [loop_thread setName:@"loop_thread"];
             [loop_thread start];*/
 
-        globalLoopThread = std::thread(&ViewController::globalPoseGraphLoop, this); /*
+        this->globalLoopThread = std::thread(&ViewController::globalPoseGraphLoop, this); /*
             globalLoopThread=[[NSThread alloc]initWithTarget:self selector:@selector(globalLoopThread) object:nil];
             [globalLoopThread setName:@"globalLoopThread"];
             [globalLoopThread start];*/
     }
 
     /************************************Device and iOS version check************************************/
-    bool deviceCheck = setGlobalParam(deviceName());
+    bool deviceCheck = setGlobalParam(this->deviceName());
     if (!deviceCheck) {
         LOGE("Device not supported");
         /* 
@@ -130,12 +130,12 @@ void ViewController::viewDidLoad() {
         });
         */
     }
-    vins.setExtrinsic();
-    vins.setIMUModel();
-    featuretracker.vins_pnp.setExtrinsic();
-    featuretracker.vins_pnp.setIMUModel();
-    bool versionCheck = iosVersion();
-    if (!versionCheck) {
+    this->vins.setExtrinsic();
+    this->vins.setIMUModel();
+    this->featuretracker.vins_pnp.setExtrinsic();
+    this->featuretracker.vins_pnp.setIMUModel();
+    bool versionCheck = this->iosVersion();
+    //if (!versionCheck) {
         /*
         UIAlertController *alertVersion = [UIAlertController alertControllerWithTitle:@"Warn"
         message:@"Please upgrade your iOS version!" preferredStyle:UIAlertControllerStyleAlert];
@@ -149,17 +149,17 @@ void ViewController::viewDidLoad() {
             [self presentViewController:alertVersion animated:YES completion:nil];
         });
         */
-    }
+    //}
 
     /*********************************************Start VINS*******************************************/
     if (versionCheck && deviceCheck) {
-        imuStartUpdate(); // [self imuStartUpdate];
-        isCapturing = true;
+        this->imuStartUpdate(); // [self imuStartUpdate];
+        this->isCapturing = true;
         // TODO: Move mainLoopInit here
         // [mainLoop start]; 
         // TODO: init ASensorManager motionManager = [[CMMotionManager alloc] init];
-        frameSize = cv::Size(videoWidth,
-                             videoHeight); // frameSize = cv::Size(videoCamera.imageWidth, videoCamera.imageHeight);
+        this->frameSize = cv::Size(this->videoWidth,
+                             this->videoHeight); // frameSize = cv::Size(videoCamera.imageWidth, videoCamera.imageHeight);
         LOGI("Init successful");
     } else {
         LOGE("Init failed due to unsupported Device or OS Version");
@@ -172,7 +172,7 @@ void ViewController::processImage(cv::Mat &image, double timeStamp, bool isScree
 //- (void)processImage:(cv::Mat&)image {
 //    LOGI("Mat Width(cols): %d, Height(rows): %d isCapturing: %d", image.cols, image.rows, isCapturing);
 
-    if (isCapturing) {
+    if (this->isCapturing) {
         /*
         //__android_log_print(ANDROID_LOG_INFO, APPNAME, "image processing");
         float lowPart = image.at<float>(0,0);  //modify opencv library, timestamp was stored at index 0,0
@@ -193,8 +193,8 @@ void ViewController::processImage(cv::Mat &image, double timeStamp, bool isScree
         double* time_now_decode = (double*)Group;
         double time_stamp = *time_now_decode;
         */
-        if (lateast_imu_time <= 0) {
-            LOGI("IMU Timestamp negative: %lf, abort processImage()", lateast_imu_time);
+        if (this->lateast_imu_time <= 0) {
+            LOGI("IMU Timestamp negative: %lf, abort processImage()", this->lateast_imu_time);
             if (isScreenRotated)
                 cv::rotate(image, image, cv::ROTATE_180);
             return;
@@ -244,7 +244,7 @@ void ViewController::processImage(cv::Mat &image, double timeStamp, bool isScree
         else
         {*/
         // terminate method if buffer isn't empty but recording isn't enabled either
-        if (!imgDataBuf.empty()) {
+        if (!this->imgDataBuf.empty()) {
             LOGI("!imgDataBuf.empty(), abort processImage()");
             return;
         }
@@ -263,20 +263,20 @@ void ViewController::processImage(cv::Mat &image, double timeStamp, bool isScree
 //        TS(time_feature);
 
 
-        m_depth_feedback.lock();
-        featuretracker.solved_features = solved_features;
-        featuretracker.solved_vins = solved_vins;
-        m_depth_feedback.unlock();
+        this->m_depth_feedback.lock();
+        this->featuretracker.solved_features = this->solved_features;
+        this->featuretracker.solved_vins = this->solved_vins;
+        this->m_depth_feedback.unlock();
 
-        m_imu_feedback.lock();
-        featuretracker.imu_msgs = getImuMeasurements(img_msg->header);
-        m_imu_feedback.unlock();
+        this->m_imu_feedback.lock();
+        this->featuretracker.imu_msgs = this->getImuMeasurements(img_msg->header);
+        this->m_imu_feedback.unlock();
 
         vector<Point2f> good_pts;
         vector<double> track_len;
-        bool vins_normal = (vins.solver_flag == VINS::NON_LINEAR);
-        featuretracker.use_pnp = USE_PNP;
-        featuretracker.readImage(img_equa, img_with_feature, frame_cnt, good_pts, track_len,
+        bool vins_normal = (this->vins.solver_flag == VINS::NON_LINEAR);
+        this->featuretracker.use_pnp = USE_PNP;
+        this->featuretracker.readImage(img_equa, img_with_feature, frame_cnt, good_pts, track_len,
                                  img_msg->header, pnp_P, pnp_R, vins_normal);
 //        TE(time_feature);
         // painting the dots for the feature visualization
@@ -545,16 +545,16 @@ void ViewController::send_imu(const ImuConstPtr &imu_msg) {
 
 void ViewController::run() {
 //-(void)run{
-    _condition.lock(); //[_condition lock];
-    while (!mainLoop_isCancelled) // while (![[NSThread currentThread] isCancelled])
+    this->_condition.lock(); //[_condition lock];
+    while (!this->mainLoop_isCancelled) // while (![[NSThread currentThread] isCancelled])
     {
         LOGI("THREAD: Main Thread(run): process()");
-        process(); // [self process];
+        this->process(); // [self process];
         std::this_thread::sleep_for(
                 std::chrono::milliseconds(10)); // [NSThread sleepForTimeInterval:0.01];
         LOGI("THREAD: Main Thread iteration done");
     }
-    _condition.unlock(); //[_condition unlock];
+    this->_condition.unlock(); //[_condition unlock];
 
 }
 
@@ -888,8 +888,8 @@ void ViewController::imuStopUpdate() {
     const ASensor *gyroscope = ASensorManager_getDefaultSensor(sensorManager,
                                                                ASENSOR_TYPE_GYROSCOPE);
 
-    ASensorEventQueue_disableSensor(accelerometerEventQueue, accelerometer);
-    ASensorEventQueue_disableSensor(gyroscopeEventQueue, gyroscope);
+    ASensorEventQueue_disableSensor(ViewController::accelerometerEventQueue, accelerometer);
+    ASensorEventQueue_disableSensor(ViewController::gyroscopeEventQueue, gyroscope);
 }
 
 void ViewController::imuStartUpdate() {
@@ -901,35 +901,35 @@ void ViewController::imuStartUpdate() {
     if (looper == NULL)
         looper = ALooper_prepare(ALOOPER_PREPARE_ALLOW_NON_CALLBACKS);
     assert(looper != NULL);
-
-    accelerometerEventQueue = ASensorManager_createEventQueue(sensorManager, looper,
+    // static
+    ViewController::accelerometerEventQueue = ASensorManager_createEventQueue(sensorManager, looper,
                                                               LOOPER_ID_USER, NULL,
                                                               NULL);
-    assert(accelerometerEventQueue != NULL);
+    assert(ViewController::accelerometerEventQueue != NULL);
     const ASensor *accelerometer = ASensorManager_getDefaultSensor(sensorManager,
                                                                    ASENSOR_TYPE_ACCELEROMETER);
     assert(accelerometer != NULL);
-    auto status = ASensorEventQueue_enableSensor(accelerometerEventQueue,
+    auto status = ASensorEventQueue_enableSensor(ViewController::accelerometerEventQueue,
                                                  accelerometer);
     assert(status >= 0);
-    status = ASensorEventQueue_setEventRate(accelerometerEventQueue,
+    status = ASensorEventQueue_setEventRate(ViewController::accelerometerEventQueue,
                                             accelerometer,
                                             SENSOR_REFRESH_PERIOD_US);
     assert(status >= 0);
 
-
-    gyroscopeEventQueue = ASensorManager_createEventQueue(sensorManager, looper,
+    //ASensorManager_createEventQueue  Creates a new sensor event queue and associate it with a looper.
+    ViewController::gyroscopeEventQueue = ASensorManager_createEventQueue(sensorManager, looper,
                                                           LOOPER_ID_USER, process_imu_sensor_events,
                                                           NULL);
-    assert(gyroscopeEventQueue != NULL);
+    assert(ViewController::gyroscopeEventQueue != NULL);
     const ASensor *gyroscope = ASensorManager_getDefaultSensor(sensorManager,
                                                                ASENSOR_TYPE_GYROSCOPE);
 
     assert(gyroscope != NULL);
-    status = ASensorEventQueue_enableSensor(gyroscopeEventQueue,
+    status = ASensorEventQueue_enableSensor(ViewController::gyroscopeEventQueue,
                                             gyroscope);
     assert(status >= 0);
-    status = ASensorEventQueue_setEventRate(gyroscopeEventQueue,
+    status = ASensorEventQueue_setEventRate(ViewController::gyroscopeEventQueue,
                                             gyroscope,
                                             SENSOR_REFRESH_PERIOD_US);
     assert(status >= 0);
@@ -939,7 +939,7 @@ void ViewController::imuStartUpdate() {
 bool GET_DATA = false;
 bool first = true;
 ofstream outfile;
-
+// static function
 int ViewController::process_imu_sensor_events(int fd, int events, void *data) {
     static ASensorEvent acclEvent;
     static double acclEventTimestamp = -1.0;
@@ -964,11 +964,20 @@ int ViewController::process_imu_sensor_events(int fd, int events, void *data) {
         outfile << "alpha_z";
         outfile << "\n";
     }
+    /*
+     ssize_t ASensorEventQueue_getEvents(
+      ASensorEventQueue *queue,
+      ASensorEvent *events,
+      size_t count
+    )
 
-    while (ASensorEventQueue_getEvents(gyroscopeEventQueue, &gyroEvent, 1) > 0) {
+    Retrieve pending events in sensor event queue.
+    Retrieve next available events from the queue to a specified event array.
+     */
+    while (ASensorEventQueue_getEvents(ViewController::gyroscopeEventQueue, &gyroEvent, 1) > 0) {
         assert(gyroEvent.type == ASENSOR_TYPE_GYROSCOPE);
 
-        double timeStampGyro = timeStampToSec(gyroEvent.timestamp);
+        double timeStampGyro = ViewController::timeStampToSec(gyroEvent.timestamp);
 //        LOGI("IMU gyro event timeStamp: %lld", timeStampGyro);
         //The timestamp is the amount of time in seconds since the device booted.
         assert(timeStampGyro > 0);
@@ -981,37 +990,36 @@ int ViewController::process_imu_sensor_events(int fd, int events, void *data) {
                 gyroEvent.uncalibrated_gyro.z_uncalib; //latestGyro.rotationRate.z;
 
         //首次进来，就添加两个陀螺仪数据
-        if (instance->gyro_buf.size() == 0) {
+        if (ViewController::instance->gyro_buf.size() == 0) {
             LOGI("gyro interpolation buffer empty. should only happen once.");
-            instance->gyro_buf.push_back(gyro_msg);
-            instance->gyro_buf.push_back(gyro_msg);
+            ViewController::instance->gyro_buf.push_back(gyro_msg);
+            ViewController::instance->gyro_buf.push_back(gyro_msg);
             continue;
-        } else if (gyro_msg.header <= instance->gyro_buf[1].header) { //当前数据时间戳小于buf里的时间戳？
+        } else if (gyro_msg.header <= ViewController::instance->gyro_buf[1].header) { //当前数据时间戳小于buf里的时间戳？
             // Apparently events can be fired twice
             // Drop this event as it isn't more recent than the last one
             continue;
         } else {
-            instance->gyro_buf[0] = instance->gyro_buf[1];
-            instance->gyro_buf[1] = gyro_msg;
+            ViewController::instance->gyro_buf[0] = ViewController::instance->gyro_buf[1];
+            ViewController::instance->gyro_buf[1] = gyro_msg;
         }
 
-        if (instance->imu_prepare < 10) {
-            instance->imu_prepare++;
+        if (ViewController::instance->imu_prepare < 10) {
+            ViewController::instance->imu_prepare++;
             continue;
         }
 
-        while (acclEventTimestamp < instance->gyro_buf[0].header) {
-//            LOGI("acclEventTimestamp < gyroEvent.timestamp: %lf < %lf", acclEventTimestamp , instance->gyro_buf[0].header);
+        while (acclEventTimestamp < ViewController::instance->gyro_buf[0].header) {
+//            LOGI("acclEventTimestamp < gyroEvent.timestamp: %lf < %lf", acclEventTimestamp , ViewController::instance->gyro_buf[0].header);
             ssize_t numEvents;
-            while ((numEvents = ASensorEventQueue_getEvents(accelerometerEventQueue, &acclEvent,
-                                                            1)) == 0) {
+            while ((numEvents = ASensorEventQueue_getEvents(ViewController::accelerometerEventQueue, &acclEvent, 1)) == 0) {
 //                LOGI("having to wait for accl event");
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
             assert(numEvents == 1);
             assert(acclEvent.type == ASENSOR_TYPE_ACCELEROMETER);
 
-            acclEventTimestamp = timeStampToSec(acclEvent.timestamp);
+            acclEventTimestamp = ViewController::timeStampToSec(acclEvent.timestamp);
 
 //            LOGI("IMU accl event timeStamp: %lf", timeStampAccl);
             shared_ptr<IMU_MSG> acc_msg(new IMU_MSG());
@@ -1021,10 +1029,10 @@ int ViewController::process_imu_sensor_events(int fd, int events, void *data) {
             acc_msg->acc << acclEvent.acceleration.x,
                     acclEvent.acceleration.y,
                     acclEvent.acceleration.z;
-            instance->cur_acc = acc_msg;
+            ViewController::instance->cur_acc = acc_msg;
         }
-
-        if (instance->gyro_buf[1].header < acclEventTimestamp) {
+        LOGI("%f, %f, %f, %f", timeStampGyro, acclEventTimestamp, ViewController::instance->gyro_buf[0].header, ViewController::instance->gyro_buf[1].header);
+        if (ViewController::instance->gyro_buf[1].header < acclEventTimestamp) {
             LOGE("having to wait for fitting gyro event"); // This should not happen if the frequency is the same
             continue;
         }
@@ -1032,27 +1040,27 @@ int ViewController::process_imu_sensor_events(int fd, int events, void *data) {
 
         //interpolation,当加速度的时间戳在两个陀螺仪时间戳之间就插入数据
         shared_ptr<IMU_MSG> imu_msg(new IMU_MSG());
-        if (instance->cur_acc->header >= instance->gyro_buf[0].header &&
-            instance->cur_acc->header < instance->gyro_buf[1].header) {
-            imu_msg->header = instance->cur_acc->header;
+        if (ViewController::instance->cur_acc->header >= ViewController::instance->gyro_buf[0].header &&
+            ViewController::instance->cur_acc->header < ViewController::instance->gyro_buf[1].header) {
+            imu_msg->header = ViewController::instance->cur_acc->header;
 //            imu_msg->header = (double)cv::getTickCount() / cv::getTickFrequency();
-            imu_msg->acc = instance->cur_acc->acc;
-            imu_msg->gyr = instance->gyro_buf[0].gyr +
-                           (instance->gyro_buf[1].gyr - instance->gyro_buf[0].gyr) *
-                           (instance->cur_acc->header - instance->gyro_buf[0].header) /
-                           (instance->gyro_buf[1].header - instance->gyro_buf[0].header);
-            //printf("imu gyro update %lf %lf %lf\n", instance.gyro_buf[0].header, imu_msg->header, instance.gyro_buf[1].header);
-            //printf("imu inte update %lf %lf %lf %lf\n", imu_msg->header, instance.gyro_buf[0].gyr.x(), imu_msg->gyr.x(), instance.gyro_buf[1].gyr.x());
+            imu_msg->acc = ViewController::instance->cur_acc->acc;
+            imu_msg->gyr = ViewController::instance->gyro_buf[0].gyr +
+                           (ViewController::instance->gyro_buf[1].gyr - ViewController::instance->gyro_buf[0].gyr) *
+                           (ViewController::instance->cur_acc->header - ViewController::instance->gyro_buf[0].header) /
+                           (ViewController::instance->gyro_buf[1].header - ViewController::instance->gyro_buf[0].header);
+            //printf("imu gyro update %lf %lf %lf\n", ViewController::instance.gyro_buf[0].header, imu_msg->header, ViewController::instance.gyro_buf[1].header);
+            //printf("imu inte update %lf %lf %lf %lf\n", imu_msg->header, ViewController::instance.gyro_buf[0].gyr.x(), imu_msg->gyr.x(), ViewController::instance.gyro_buf[1].gyr.x());
         } else {
-            LOGE("imu error %lf %lf %lf\n", instance->gyro_buf[0].header, instance->cur_acc->header,
-                 instance->gyro_buf[1].header);
+            LOGE("imu error %lf %lf %lf\n", ViewController::instance->gyro_buf[0].header, ViewController::instance->cur_acc->header,
+                 ViewController::instance->gyro_buf[1].header);
             continue;
         }
 
 
         //TODO: add playback and recording back in
 
-        instance->lateast_imu_time = imu_msg->header;
+        ViewController::instance->lateast_imu_time = imu_msg->header;
 
         //保存标定的数据
         if (GET_DATA) {
@@ -1075,14 +1083,14 @@ int ViewController::process_imu_sensor_events(int fd, int events, void *data) {
             imu_msg_local.acc = imu_msg->acc;
             imu_msg_local.gyr = imu_msg->gyr;
 
-            instance->m_imu_feedback.lock();
-            instance->local_imu_msg_buf.push(imu_msg_local);
-            instance->m_imu_feedback.unlock();
+            ViewController::instance->m_imu_feedback.lock();
+            ViewController::instance->local_imu_msg_buf.push(imu_msg_local);
+            ViewController::instance->m_imu_feedback.unlock();
         }
-        instance->m_buf.lock();
-        instance->imu_msg_buf.push(imu_msg);
-        instance->m_buf.unlock();
-        instance->con.notify_one();
+        ViewController::instance->m_buf.lock();
+        ViewController::instance->imu_msg_buf.push(imu_msg);
+        ViewController::instance->m_buf.unlock();
+        ViewController::instance->con.notify_one();
     }
 
     //should return 1 to continue receiving callbacks, or 0 to unregister                                                                                                                           
