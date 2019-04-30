@@ -439,7 +439,8 @@ void ViewController::processImage(cv::Mat &image, double timeStamp, bool isScree
 //            TE(big_Window_rotate);
 
 //            TS(big_Window_cvtColor);
-            cv::cvtColor(image, image, CV_RGB2RGBA);
+//            cv::cvtColor(image, image, CV_RGB2RGBA);
+            cv::cvtColor(image, image, cv::COLOR_RGB2RGBA);
 //            TE(big_Window_cvtColor);
         }
         // prints information about how long the visualization took in ms

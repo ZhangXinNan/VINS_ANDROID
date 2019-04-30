@@ -130,7 +130,7 @@ public class MainActivity extends AppCompatActivity implements TextureView.Surfa
         setContentView(R.layout.activity_main);
 
         // first make sure the necessary permissions are given
-        checkPermissionsIfNeccessary();
+        this.checkPermissionsIfNeccessary();
 
         mPath = Environment.getExternalStorageDirectory() + File.separator + "VINS" + File.separator + "img_imu_data";
         File file = new File(mPath);
@@ -144,9 +144,9 @@ public class MainActivity extends AppCompatActivity implements TextureView.Surfa
         if (!file1.exists()) copyFile(file1);
         if (!file2.exists()) copyFile(file2);
 
-        cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+        this.cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
 
-        initViews();
+        this.initViews();
 
     }
 
@@ -251,12 +251,12 @@ public class MainActivity extends AppCompatActivity implements TextureView.Surfa
         try {
             // check permissions
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                checkPermissionsIfNeccessary();
+                this.checkPermissionsIfNeccessary();
                 return;
             }
 
             // start up Camera (not the recording)
-            cameraManager.openCamera(cameraID, cameraDeviceStateCallback, handler);
+            this.cameraManager.openCamera(cameraID, cameraDeviceStateCallback, handler);
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -449,7 +449,7 @@ public class MainActivity extends AppCompatActivity implements TextureView.Surfa
 
         if (textureView.isAvailable()) {
             try {
-                cameraManager.openCamera(cameraID, cameraDeviceStateCallback, handler);
+                this.cameraManager.openCamera(cameraID, cameraDeviceStateCallback, handler);
             } catch (CameraAccessException e) {
                 e.printStackTrace();
             }
